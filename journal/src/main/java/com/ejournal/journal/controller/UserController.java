@@ -2,6 +2,7 @@ package com.ejournal.journal.controller;
 
 import com.ejournal.journal.entity.User;
 import com.ejournal.journal.service.UserService;
+import lombok.NonNull;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,17 +55,16 @@ public class UserController {
         }
     }
 
-    @PutMapping("id/{myId}")
-    public ResponseEntity<?> updateUserById(@PathVariable ObjectId myId, @RequestBody User newUser){
-        User oldUser = userService.getById(myId).orElse(null);
-        if (oldUser!=null){
-            oldUser.setPassword(newUser.getPassword()!=null && !newUser.getPassword().equals("")? newUser.getPassword(): oldUser.getPassword());
-            oldUser.setUsername(newUser.getUsername()!=null && !newUser.getUsername().equals("")? newUser.getUsername(): oldUser.getUsername());
-            oldUser.setJournalEntries(newUser.getJournalEntries()!=null && !newUser.getJournalEntries().equals("")? newUser.getJournalEntries(): oldUser.getJournalEntries());
-            userService.saveEntry(oldUser);
-            return new ResponseEntity<>(oldUser,HttpStatus.OK);
+    @PutMapping()
+    public ResponseEntity<?> updateUser(@RequestBody @NonNull User newUser){
+        User UserInDb = userService.findByUsername(newUser.getUsername());
+        if (UserInDb!=null){
+            UserInDb.setPassword(newUser.getPassword());
+            UserInDb.setUsername(newUser.getUsername());
+            UserInDb.setJournalEntries(newUser.getJournalEntries()!=null && !newUser.getJournalEntries().equals("")? newUser.getJournalEntries(): UserInDb.getJournalEntries());
+            userService.saveEntry(UserInDb);
+            return new ResponseEntity<>(UserInDb,HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-
 }
