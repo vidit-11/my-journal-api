@@ -1,9 +1,9 @@
-//Third iteration using Mongodb instead of HashMap
-
 package com.ejournal.journal.controller;
 
 import com.ejournal.journal.entity.JournalEntry;
+import com.ejournal.journal.entity.User;
 import com.ejournal.journal.service.JournalEntryService;
+import com.ejournal.journal.service.UserService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,20 +17,23 @@ public class JournalEntryControllerV2 {
 
     @Autowired
     private JournalEntryService journalEntryService;
+    @Autowired
+    private UserService userService;
 
-    @GetMapping
-    public ResponseEntity<?> getAll(){
-        List<JournalEntry> allEntries = journalEntryService.getAllEntries();
+    @GetMapping("{}userName")
+    public ResponseEntity<?> getAllJournalEntriesOfUser(@PathVariable String userName){
+        User user = userService.findByUsername(userName);
+        List<JournalEntry> allEntries = user.getJournalEntries();
         if(allEntries!=null && !allEntries.isEmpty()){
             return new ResponseEntity<>(allEntries,HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping
-    public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry){
+    @PostMapping("{userName}")
+    public ResponseEntity<JournalEntry> createEntryOfUser(@RequestBody JournalEntry myEntry, @PathVariable String userName){
         try {
-            journalEntryService.saveEntry(myEntry);
+            journalEntryService.saveEntry(myEntry, userName);
             return new ResponseEntity<>(myEntry, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -38,7 +41,7 @@ public class JournalEntryControllerV2 {
     }
 
     @GetMapping("id/{myId}")
-    public ResponseEntity<JournalEntry> getEntryById(@PathVariable ObjectId myId) {
+    public ResponseEntity<JournalEntry> getEntryByIdOfUser(@PathVariable ObjectId myId) {
         Optional<JournalEntry> journalEntry = journalEntryService.getById(myId);
         if (journalEntry.isPresent()){
             return new ResponseEntity<>(journalEntry.get(), HttpStatus.OK);
@@ -46,18 +49,18 @@ public class JournalEntryControllerV2 {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @DeleteMapping("id/{myId}")
-    public ResponseEntity<?> deleteEntryById(@PathVariable ObjectId myId){
+    @DeleteMapping("id/{userName}/{myId}")
+    public ResponseEntity<?> deleteEntryByIdOfUser(@PathVariable String userName, @PathVariable  ObjectId myId){
         try {
-            journalEntryService.deleteById(myId);
+            journalEntryService.deleteById(myId, userName);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
 
-    @PutMapping("id/{myId}")
-    public ResponseEntity<?> updateEntryById(@PathVariable ObjectId myId, @RequestBody JournalEntry newEntry){
+    @PutMapping("id/{userName}/{myId}")
+    public ResponseEntity<?> updateEntryByIdOfUser(@PathVariable String userName, @PathVariable ObjectId myId, @RequestBody JournalEntry newEntry){
         JournalEntry oldjournalEntry=journalEntryService.getById(myId).orElse(null);
         if (oldjournalEntry!=null){
             oldjournalEntry.setTitle(newEntry.getTitle()!=null && !newEntry.getTitle().equals("")? newEntry.getTitle():oldjournalEntry.getTitle());
@@ -67,4 +70,5 @@ public class JournalEntryControllerV2 {
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
 }
