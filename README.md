@@ -1,2 +1,2 @@
 # my-journal-api
-My first SpringBoot project
+My first SpringBoot project 
